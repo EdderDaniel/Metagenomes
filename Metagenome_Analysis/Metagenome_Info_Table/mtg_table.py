@@ -35,7 +35,8 @@ def get_taxa_lineages(taxa_table):
 	# To do this, the script uses the ete3 library, so that one needs to be installed beforehand. 
 	# Aside from getting the full taxonomic lineage, the function also removes any intermediate taxonomical group and
 	# adds the lineage to the taxonomic info table
-	# I couldn’t figure out an easy way to include sub-species since it’s not a recognized taxonomic group.
+	# I couldn’t figure out an easy way to include sub-species since it’s not a recognized taxonomic group, 
+	# so I introduced some hacks for it, which work most of the time, but not everytime.
 
 
 	##############
@@ -59,8 +60,16 @@ def get_taxa_lineages(taxa_table):
 		else:
 
 			ordered_lineage = []
+			last_one = []
 
 			lineage = ncbi.get_lineage(element)        #returns list of lineage taxids
+
+			last_taxid = lineage[-1]
+			last_one.append(last_taxid)
+			last_one_name = ncbi.get_taxid_translator(last_one)
+			last_taxid_name = last_one_name[last_taxid]
+			how_long = len(last_taxid_name.split())
+
 			names = ncbi.get_taxid_translator(lineage) #returns dict in which the taxids of the lineage list become the keys (int) and the translations the values. Error if there is a 0 
 			lineage2ranks = ncbi.get_rank(names)       #returns a dict in which the taxids of the names become the keys (int) and the the orders the values. Error if there is a 0. It is not ordered
 
@@ -68,8 +77,15 @@ def get_taxa_lineages(taxa_table):
 				ordered_lineage.append("")
 				for key, value in lineage2ranks.items():
 					if rank == value:
+						last_rank = rank
 						ordered_lineage.pop()
 						ordered_lineage.append(names[key])
+			
+			if how_long == 2 and ordered_lineage[-2] == "":
+				ordered_lineage[-2] = last_taxid_name
+
+			if how_long >= 3 and ordered_lineage[-1] == "" and last_rank == "species" and ordered_lineage[-2] != last_taxid_name:
+				ordered_lineage[-1] = last_taxid_name
 			
 			unique_taxa.update({element: ordered_lineage})
 
@@ -222,7 +238,7 @@ def main():
 	parser.add_argument("-t", "--taxa_assig", dest="taxassig_file", required=True, 
 		help="Direction to the taxonomic assignment file. Can be kraken, kraken2, kaiju or a tsv with the contig name and the taxid, without headers")
 	parser.add_argument("-l", "--lineages", dest="lineages_file", default=" ",
-		help="if you have a lineages file you can use it and the script will not compute them. Otherwhise, the scirpt will attempt to get them using the ete3 library")
+		help="if you have a lineages file you can use it and the script will not compute them. Otherwhise, the script will attempt to get them using the ete3 library")
 	parser.add_argument("-c", "--coverage", dest="coverage_file", default=" ",
 		help="Direction to the coverage file")
 	parser.add_argument("-o", "--output", default= "output.csv", 
