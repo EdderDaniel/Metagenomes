@@ -47,7 +47,8 @@ With this file and the output file from the **get_abundances.py** you can now ru
 
 ### Optional arguments
 
-| Option        | Description                                                                                                                                                                                              |
-|---------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| -o, --output  | Output filename. The default is updated_output.tsv                                                                                                                                                       |
-| -l, --lineage | If you want to generate an updated lineage file you can use this option. As in the previous script, the options are ranked, to get only the named taxonomical order, and full, to get the full lineage.  |
+| Option        | Description                                                                                                                                                                                            |
+|---------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| -o, --output  | Output filename. The default is updated_output.tsv                                                                                                                                                     |
+| -l, --lineage | If you want to generate an updated lineage file you can use this option. As in the previous script, the options are ranked, to get only the named taxonomical order, and full, to get the full lineage |
+| -h            | Shows the available options and exits                                                                                                                                                                  |
