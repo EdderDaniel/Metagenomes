@@ -14,12 +14,12 @@ def only_files(path):
 		if os.path.isfile(os.path.join(path,file)):
 			yield file
 
-def get_lineages(otus):
+def get_full_lineages(otus):
 
-	#### makes the lineage file (lineages.tsv). Requires ete3 ####
+	#### makes the full lineage file (lineages.tsv). Requires ete3 ####
 
 	#Input: list of the otus in the table obtained from the get_otus function
-	#Output: makes the lineages.tsv file 
+	#Output: makes the full_lineages.tsv file 
 
 	from ete3 import NCBITaxa
 
@@ -43,9 +43,71 @@ def get_lineages(otus):
 		all_names = ";".join(names)
 		lineages.update({entrie: all_names})
 
-	lineages_df = pd.DataFrame(lineages.items(), columns=["OTU", "lineage"])
-	lineages_df.to_csv("lineages.tsv", sep="\t", index=False, header=True)
-	print("lineage file created")
+	lineages_df = pd.DataFrame(lineages.items(), columns=["OTU", "LINEAGE"])
+	lineages_df.to_csv("full_lineages.tsv", sep="\t", index=False, header=True)
+	print("full lineage file created")
+
+def get_ranked_lineages(otus):
+
+	#### makes the ranked lineage file (lineages.tsv). Requires ete3 ####
+
+	#Input: list of the otus in the table obtained from the get_otus function
+	#Output: makes the ranked_lineages.tsv file 
+
+
+	from ete3 import NCBITaxa
+
+	ncbi = NCBITaxa()    
+
+	unique_taxa = {0: ['','','','','','',''], 1: ['Root','','','','','',''], 2: ['Bacteria','','','','','','']}
+	list_of_ranks = ["superkingdom", "phylum", "class", "order", "family", "genus", "species", "subspecies"]
+
+	ranked_lineages = []	
+
+	for element in otus:
+		if element in unique_taxa:
+			lineage2add = list(unique_taxa.get(element))
+			lineage2add.insert(0,element)
+			ranked_lineages.append(lineage2add)
+		else:
+
+			ordered_lineage = []
+			last_one = []
+
+			lineage = ncbi.get_lineage(element)        #returns list of lineage taxids
+
+			last_taxid = lineage[-1]
+			last_one.append(last_taxid)
+			last_one_name = ncbi.get_taxid_translator(last_one)
+			last_taxid_name = last_one_name[last_taxid]
+			how_long = len(last_taxid_name.split())
+
+			names = ncbi.get_taxid_translator(lineage) #returns dict in which the taxids of the lineage list become the keys (int) and the translations the values. Error if there is a 0 
+			lineage2ranks = ncbi.get_rank(names)       #returns a dict in which the taxids of the names become the keys (int) and the the orders the values. Error if there is a 0. It is not ordered
+
+			for rank in list_of_ranks:
+				ordered_lineage.append("")
+				for key, value in lineage2ranks.items():
+					if rank == value:
+						last_rank = rank
+						ordered_lineage.pop()
+						ordered_lineage.append(names[key])
+			
+			if how_long == 2 and ordered_lineage[-2] == "":
+				ordered_lineage[-2] = last_taxid_name
+
+			if how_long >= 3 and ordered_lineage[-1] == "" and last_rank == "species" and ordered_lineage[-2] != last_taxid_name:
+				ordered_lineage[-1] = last_taxid_name
+			
+			unique_taxa.update({element: ordered_lineage})
+
+			lineage2add = list(unique_taxa.get(element))
+			lineage2add.insert(0,element)
+			ranked_lineages.append(lineage2add)
+
+	ranked_lineages_table = pd.DataFrame(ranked_lineages, columns=["TAXID", "SUPERKINGDOM", "PHYLUM", "CLASS", "ORDER", "FAMILY", "GENUS", "SPECIES", "SUB_SPECIES"])
+	ranked_lineages_table.to_csv("ranked_lineages.tsv", sep="\t", index=False, header=True)
+	print("ranked lineage file created")
 
 def get_otus(input_dir,list_files):
 
@@ -87,7 +149,7 @@ def main():
 	####### Arguments ####### 
 
 	parser = argparse.ArgumentParser()
-	parser.add_argument("-i", "--input_dir", default="./", 
+	parser.add_argument("-i", "--input_dir", default="./", required=True, 
 		help="Directory from which classified reads are taken. Supported formats: Kraken2 output and Kaiju output")
 	parser.add_argument("-o", "--output", default= "output.tsv", 
 		help="ouput filename. Default is output.tsv")
@@ -95,7 +157,7 @@ def main():
 		help="Includes unclassified reads/contigs. Default is yes")
 	parser.add_argument("-e", "--extension", default="*", 
 		help="Use files with the given extension only. If it is not specified, all files will be used")
-	parser.add_argument("-l", "--lineage", choices=["yes", "no"], default = "no",
+	parser.add_argument("-l", "--lineage", choices=["no", "full", "ranks"], default = "no",
 		help="Generates an additional file (lineages.tsv) with the taxids lineages. Requires the ete3 library")
 	args = parser.parse_args()
 
@@ -132,11 +194,14 @@ def main():
 	merged_table.to_csv(args.output, sep="\t", header=True)
 	print("summary table created")
 
-	## If you want a file with the full lineages this thing will make it ##
+	## If you want a file with the full or ranked lineages this thing will make it ##
 
-	if args.lineage == "yes":
+	if args.lineage == "full":
 		list_of_otus = merged_table.index.tolist()
-		otu_lineages = get_lineages(list_of_otus)
+		get_full_lineages(list_of_otus)
+	elif args.lineage == "ranks":
+		list_of_otus = merged_table.index.tolist()
+		get_ranked_lineages(list_of_otus)
 
 if __name__ == "__main__":
     main()
