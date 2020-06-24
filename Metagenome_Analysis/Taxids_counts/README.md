@@ -43,7 +43,7 @@ With this file and the output file from the **get_abundances.py** you can now ru
 | Option               | Description                                                |
 |----------------------|------------------------------------------------------------|
 | -i, --input_file     | Path to the input file obtained from **get_abundances.py** |
-| -t, --taxids2replace | Path to the file with the taxis that need to be changed    |
+| -t, --taxids2replace | Path to the file with the taxis that need to be changed (the tsv file that i mentioned earlier)    |
 
 ### Optional arguments
 
