@@ -64,7 +64,7 @@ def get_ranked_lineages(otus):
 	ranked_lineages_table = pd.DataFrame(ranked_lineages, columns=["TAXID", "SUPERKINGDOM", "PHYLUM", "CLASS", "ORDER", "FAMILY", "GENUS", "SPECIES", "SUB_SPECIES"])
 	ranked_lineages_table.to_csv("ranked_lineages_updated.tsv", sep="\t", index=False, header=True)
 
-def get_full_lineages(otus):
+def get_full_lineage(otus):
 
 	### Makes the updated lineage file (full_lineages_updated.tsv), requires the ete3 library
 
@@ -158,7 +158,7 @@ def main():
 	with open(args.input_file) as ff:
 		headers = ff.readline().rstrip()
 		for lines in ff:
-			elements = lines.rstrip().split(",")
+			elements = lines.rstrip().split("\t")
 			taxid_value.update({int(elements[0]): [int(x) for x in elements[1:]]})
 
 	#### Updates taxid values and counts and prints the output ####
