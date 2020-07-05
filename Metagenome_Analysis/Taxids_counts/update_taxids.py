@@ -3,7 +3,7 @@
 import argparse               
 import pandas as pd 
 
-def get_ranked_lineages(otus):
+def get_ranked_lineage(otus):
 
 	### Makes the updated lineage file (ranked_lineages_updated.tsv), requires the ete3 library
 
