@@ -15,10 +15,13 @@ def get_ranked_lineage(otus):
 
 	ncbi = NCBITaxa()    
 
+
 	unique_taxa = {0: ['','','','','','',''], 1: ['Root','','','','','',''], 2: ['Bacteria','','','','','','']}
 	list_of_ranks = ["superkingdom", "phylum", "class", "order", "family", "genus", "species", "subspecies"]
 
-	ranked_lineages = []	
+	ranked_lineages = []
+	longest = 0
+	sub = 2	
 
 	for element in otus:
 		if element in unique_taxa:
@@ -28,40 +31,47 @@ def get_ranked_lineage(otus):
 		else:
 
 			ordered_lineage = []
-			last_one = []
+			rest = []
+			last_rank = ""
 
 			lineage = ncbi.get_lineage(element)        #returns list of lineage taxids
 
-			last_taxid = lineage[-1]
-			last_one.append(last_taxid)
-			last_one_name = ncbi.get_taxid_translator(last_one)
-			last_taxid_name = last_one_name[last_taxid]
-			how_long = len(last_taxid_name.split())
-
 			names = ncbi.get_taxid_translator(lineage) #returns dict in which the taxids of the lineage list become the keys (int) and the translations the values. Error if there is a 0 
-			lineage2ranks = ncbi.get_rank(names)       #returns a dict in which the taxids of the names become the keys (int) and the the orders the values. Error if there is a 0. It is not ordered
+			lineage2ranks = ncbi.get_rank(names)       #returns a dict in which the taxids of the names become the keys (int) and the order to which the taxids are assigned the values. Error if there is a 0. It is not ordered
 
-			for rank in list_of_ranks:
-				ordered_lineage.append("")
-				for key, value in lineage2ranks.items():
-					if rank == value:
-						last_rank = rank
-						ordered_lineage.pop()
-						ordered_lineage.append(names[key])
-			
-			if how_long == 2 and ordered_lineage[-2] == "":
-				ordered_lineage[-2] = last_taxid_name
+			for taxid in lineage:
+				
+				if last_rank == "species":
+					rest.append(taxid)
+					continue
 
-			if how_long >= 3 and ordered_lineage[-1] == "" and last_rank == "species" and ordered_lineage[-2] != last_taxid_name:
-				ordered_lineage[-1] = last_taxid_name
-			
+				if str(lineage2ranks.get(taxid)) not in list_of_ranks:
+					continue
+				
+				last_rank = str(lineage2ranks.get(taxid))
+				ordered_lineage.append(names[taxid])
+
+
+			if rest:
+				for taxid_rest in rest:
+					ordered_lineage.append(names[taxid])
+
+				if len(rest) > longest:
+					longest = len(rest)
+
 			unique_taxa.update({element: ordered_lineage})
 
 			lineage2add = list(unique_taxa.get(element))
 			lineage2add.insert(0,element)
 			ranked_lineages.append(lineage2add)
 
-	ranked_lineages_table = pd.DataFrame(ranked_lineages, columns=["TAXID", "SUPERKINGDOM", "PHYLUM", "CLASS", "ORDER", "FAMILY", "GENUS", "SPECIES", "SUB_SPECIES"])
+	while longest > 1:
+		list_of_ranks.append(("subspecies_" + str(sub)))
+		sub += 1
+		longest -= 1
+
+	list_of_ranks.insert(0,"OTU")
+	ranked_lineages_table = pd.DataFrame(ranked_lineages, columns=list_of_ranks)
 	ranked_lineages_table.to_csv("ranked_lineages_updated.tsv", sep="\t", index=False, header=True)
 
 def get_full_lineage(otus):
