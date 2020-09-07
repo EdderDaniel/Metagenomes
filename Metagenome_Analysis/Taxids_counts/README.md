@@ -29,14 +29,14 @@ If your local copy of the NCBI taxonomy (which is downloaded and used by the ete
 		~/ete3/ncbi_taxonomy/ncbiquery.py:240: UserWarning: taxid 2219703 was translated into 2650924
   	warnings.warn("taxid %s was translated into %s" %(taxid, merged_conversion[taxid]))
 
-To deal with this problem you can use the **update_taxonomy.sh** script. 
+To deal with this problem you can use the **update_taxids.py** script. 
 
 First, copy all of the warnings and put them in a tsv file (without headers) in which you have the original taxid in one column and the translation in another. For previous example the table should look like this:
 
 | 2219703 | 2650924 |
 |---------|---------|
 
-With this file and the output file from the **get_abundances.py** you can now run the  **update_taxonomy.sh** script.
+With this file and the output file from the **get_abundances.py** you can now run the  **update_taxids.py** script.
 
 ### Required arguments
 
